@@ -1,0 +1,547 @@
+{% extends 'devices/base.html' %}
+{% load static %}
+{% load static %}
+
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="bg-white p-4 rounded shadow text-center">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <p class="mb-0">Fetching data from switches...</p>
+    </div>
+</div>
+
+{% block title %}Dashboard - Network CDN{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Tab content styling */
+    .tab-pane {
+        padding-top: 20px;
+    }
+    
+    /* Stats cards */
+    .stat-card {
+        background: var(--card-bg, #ffffff);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid var(--border-color, #e2e8f0);
+        transition: transform 0.2s;
+    }
+    
+    body.light-mode .stat-card {
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+    }
+    
+    body.dark-mode .stat-card {
+        --card-bg: #1e293b;
+        --border-color: #334155;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+    }
+    
+    /* Info grid for system info */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .info-item {
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    body.light-mode .info-item {
+        background: #f8fafc;
+    }
+    
+    body.dark-mode .info-item {
+        background: #0f172a;
+    }
+    
+    .info-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 14px;
+        font-weight: 500;
+        word-break: break-all;
+    }
+    
+    /* MAC address table styling */
+    .mac-address {
+        font-family: monospace;
+        font-size: 12px;
+    }
+    
+    /* Scrollable tables */
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    /* Badge styling */
+    .badge-connected {
+        background: #10b981;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+    
+    .badge-notconnect {
+        background: #ef4444;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="theme-heading">
+            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+            Network Dashboard
+        </h1>
+        <p class="text-secondary-custom">Complete visibility into all network devices</p>
+    </div>
+    <div class="col-auto">
+        <div class="d-flex gap-2 align-items-center">
+            <span class="text-secondary-custom" id="lastUpdated">
+                <i class="fas fa-clock me-1"></i> Loading...
+            </span>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoRefresh">
+                <label class="form-check-label text-secondary-custom" for="autoRefresh">
+                    Auto-refresh (30s)
+                </label>
+            </div>
+            <button class="btn btn-refresh" id="refreshBtn">
+                <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+{% for device_data in devices_data %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <i class="fas fa-server me-2 text-primary"></i>
+            <strong>{{ device_data.device.name }}</strong>
+            <span class="text-secondary-custom ms-2 small">
+                <i class="fas fa-map-marker-alt me-1"></i>{{ device_data.device.host }}:{{ device_data.device.port }}
+            </span>
+        </div>
+        <div class="mt-2 mt-sm-0">
+            <span class="badge bg-secondary me-2">
+                <i class="fas fa-plug me-1"></i> {{ device_data.interfaces|length }} Ports
+            </span>
+            <span class="badge bg-secondary me-2">
+                <i class="fas fa-tags me-1"></i> {{ device_data.vlans|length }} VLANs
+            </span>
+            <span class="badge bg-secondary">
+                <i class="fas fa-ethernet me-1"></i> {{ device_data.mac_table|length }} MACs
+            </span>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        {% if device_data.error %}
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ device_data.error }}
+        </div>
+        {% else %}
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="deviceTabs-{{ device_data.device.id }}" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" 
+                        data-bs-target="#interfaces-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-plug me-1"></i> Interfaces
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" 
+                        data-bs-target="#vlans-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-tags me-1"></i> VLANs
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" 
+                        data-bs-target="#mac-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-ethernet me-1"></i> MAC Table
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" 
+                        data-bs-target="#system-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-info-circle me-1"></i> System
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" 
+                        data-bs-target="#neighbors-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-share-alt me-1"></i> Neighbors
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" 
+                        data-bs-target="#security-{{ device_data.device.id }}" 
+                        type="button" role="tab">
+                    <i class="fas fa-shield-alt me-1"></i> Security
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+            
+            <!-- ========== INTERFACES TAB ========== -->
+            <div class="tab-pane fade show active" id="interfaces-{{ device_data.device.id }}" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control search-box" 
+                               data-table="iface-table-{{ device_data.device.id }}" 
+                               placeholder="🔍 Filter interfaces...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="iface-table-{{ device_data.device.id }}">
+                        <thead>
+                            <tr>
+                                <th>Port</th>
+                                <th>Status</th>
+                                <th>VLAN</th>
+                                <th>Speed</th>
+                                <th>Duplex</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for interface in device_data.interfaces %}
+                            <tr>
+                                <td><code>{{ interface.port }}</code></td>
+                                <td>
+                                    {% if interface.status == 'connected' %}
+                                    <span class="status-up">
+                                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i> Connected
+                                    </span>
+                                    {% elif interface.status == 'notconnect' %}
+                                    <span class="status-down">
+                                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i> Not Connected
+                                    </span>
+                                    {% else %}
+                                    <span class="status-unknown">
+                                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i> {{ interface.status }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ interface.vlan|default:"1" }}</td>
+                                <td>{{ interface.speed|default:"auto" }}</td>
+                                <td>{{ interface.duplex|default:"auto" }}</td>
+                                <td>{{ interface.type|default:"-" }}</td>
+                                <td>{{ interface.name|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-secondary-custom py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No interface data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- ========== VLAN TAB ========== -->
+            <div class="tab-pane fade" id="vlans-{{ device_data.device.id }}" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control search-box" 
+                               data-table="vlan-table-{{ device_data.device.id }}" 
+                               placeholder="🔍 Filter VLANs...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="vlan-table-{{ device_data.device.id }}">
+                        <thead>
+                            <tr>
+                                <th>VLAN ID</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Ports</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vlan in device_data.vlans %}
+                            <tr>
+                                <td><code>{{ vlan.vlan_id }}</code></td>
+                                <td>{{ vlan.vlan_name }}</td>
+                                <td>
+                                    <span class="status-up">
+                                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i> {{ vlan.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>
+                                        {% if vlan.ports %}
+                                            {{ vlan.ports|truncatechars:80 }}
+                                        {% else %}
+                                            <span class="text-secondary">-</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary-custom py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No VLAN data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- ========== MAC TABLE TAB ========== -->
+            <div class="tab-pane fade" id="mac-{{ device_data.device.id }}" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control search-box" 
+                               data-table="mac-table-{{ device_data.device.id }}" 
+                               placeholder="🔍 Filter MAC addresses...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="mac-table-{{ device_data.device.id }}">
+                        <thead>
+                            <tr>
+                                <th>VLAN</th>
+                                <th>MAC Address</th>
+                                <th>Type</th>
+                                <th>Port</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mac in device_data.mac_table %}
+                            <tr>
+                                <td>{{ mac.vlan }}</td>
+                                <td><code class="mac-address">{{ mac.mac_address }}</code></td>
+                                <td>{{ mac.type }}</td>
+                                <td>{{ mac.ports }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary-custom py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No MAC addresses found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- ========== SYSTEM INFO TAB ========== -->
+            <div class="tab-pane fade" id="system-{{ device_data.device.id }}" role="tabpanel">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-code-branch me-1"></i> IOS Version</div>
+                        <div class="info-value">{{ device_data.system_info.version|default:"Unknown" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-clock me-1"></i> Uptime</div>
+                        <div class="info-value">{{ device_data.system_info.uptime|default:"Unknown"|truncatechars:80 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-microchip me-1"></i> Hardware</div>
+                        <div class="info-value">{{ device_data.system_info.hardware|default:"Unknown"|truncatechars:60 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-barcode me-1"></i> Serial Number</div>
+                        <div class="info-value">{{ device_data.system_info.serial|default:"Unknown" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-hdd me-1"></i> System Image</div>
+                        <div class="info-value">{{ device_data.system_info.image|default:"Unknown"|truncatechars:60 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label"><i class="fas fa-tree me-1"></i> STP Root Bridge</div>
+                        <div class="info-value">{{ device_data.stp_info.root_bridge|default:"Unknown"|truncatechars:50 }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ========== CDP NEIGHBORS TAB ========== -->
+            <div class="tab-pane fade" id="neighbors-{{ device_data.device.id }}" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control search-box" 
+                               data-table="neighbor-table-{{ device_data.device.id }}" 
+                               placeholder="🔍 Filter neighbors...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="neighbor-table-{{ device_data.device.id }}">
+                        <thead>
+                            <tr>
+                                <th>Device ID</th>
+                                <th>Local Interface</th>
+                                <th>Platform</th>
+                                <th>Neighbor Port</th>
+                                <th>Capability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for neighbor in device_data.cdp_neighbors %}
+                            <tr>
+                                <td>{{ neighbor.device_id }}</td>
+                                <td>{{ neighbor.local_interface }}</td>
+                                <td>{{ neighbor.platform }}</td>
+                                <td>{{ neighbor.port_id }}</td>
+                                <td>{{ neighbor.capability }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-secondary-custom py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No CDP neighbors found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- ========== SECURITY TAB ========== -->
+            <div class="tab-pane fade" id="security-{{ device_data.device.id }}" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Port</th>
+                                <th>Port Security Status</th>
+                                <th>Max MAC Addresses</th>
+                                <th>Current MACs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for port in device_data.port_security %}
+                            <tr>
+                                <td><code>{{ port.port }}</code></td>
+                                <td>
+                                    {% if port.status == 'enabled' or port.status == 'Enable' %}
+                                    <span class="status-up">Enabled</span>
+                                    {% else %}
+                                    <span class="status-unknown">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ port.max_addresses }}</td>
+                                <td>{{ port.current_addresses }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary-custom py-4">
+                                    <i class="fas fa-info-circle me-1"></i> No port security data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-info-circle fa-3x text-secondary-custom mb-3"></i>
+        <h5 class="mb-3">No Devices Found</h5>
+        <p class="text-secondary-custom">Please add a device in the <a href="/admin" class="text-primary">admin panel</a></p>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search/filter functionality for all tables
+    $('.search-box').on('keyup', function() {
+        const filter = $(this).val().toLowerCase();
+        const tableId = $(this).data('table');
+        const table = $('#' + tableId);
+        const rows = table.find('tbody tr');
+        
+        rows.each(function() {
+            const text = $(this).text().toLowerCase();
+            $(this).toggle(text.includes(filter));
+        });
+    });
+    
+    // Auto-refresh
+    let autoRefreshInterval = null;
+    
+    $('#autoRefresh').on('change', function() {
+        if ($(this).is(':checked')) {
+            autoRefreshInterval = setInterval(function() {
+                location.reload();
+            }, 30000);
+        } else {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+    });
+    
+    // Manual refresh
+    $('#refreshBtn').on('click', function() {
+        location.reload();
+    });
+    
+    // Update timestamp
+    function updateTimestamp() {
+        const now = new Date();
+        $('#lastUpdated').html('<i class="fas fa-clock me-1"></i> ' + now.toLocaleTimeString());
+    }
+    updateTimestamp();
+    setInterval(updateTimestamp, 1000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,298 @@
+/* static/css/dashboard.css */
+/* This file styles the entire dashboard */
+
+/* Global styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    color: #333;
+    font-size: 28px;
+}
+
+.header h1 span {
+    color: #667eea;
+}
+
+.header-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.refresh-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.refresh-btn:hover {
+    transform: scale(1.05);
+}
+
+.last-updated {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Device Card */
+.device-card {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.device-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Device Header */
+.device-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+}
+
+.device-header h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.device-header p {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+/* Error Message */
+.error-message {
+    background: #fee;
+    color: #c62828;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #c62828;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 0 20px;
+    margin-top: 10px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom: 3px solid #667eea;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Search Box */
+.search-box {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.search-box button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+}
+
+tr:hover {
+    background: #f9f9f9;
+}
+
+/* Status Indicators */
+.status-up {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.status-up::before {
+    content: "● ";
+    font-size: 12px;
+}
+
+.status-down {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.status-down::before {
+    content: "● ";
+    font-size: 12px;
+}
+
+/* Statistics Cards */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-card h4 {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-card .stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* Loading Spinner */
+.spinner {
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner::after {
+    content: "";
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e0e0e0;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .device-header h2 {
+        font-size: 20px;
+    }
+    
+    th, td {
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .tab-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

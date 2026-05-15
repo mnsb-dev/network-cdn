@@ -1,0 +1,567 @@
+{% extends 'devices/base.html' %}
+{% load static %}
+
+{% block title %}AI Assistant - Network CDN{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* AI Assistant specific styles - both themes supported */
+    .ai-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .ai-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .input-section, .output-section {
+        border-radius: 16px;
+        padding: 25px;
+    }
+    
+    /* Light theme specific */
+    body.light-mode .input-section,
+    body.light-mode .output-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Dark theme specific */
+    body.dark-mode .input-section,
+    body.dark-mode .output-section {
+        background: #1e293b;
+        border: 1px solid #334155;
+    }
+    
+    textarea {
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-family: 'Inter', monospace;
+        resize: vertical;
+        margin-bottom: 15px;
+    }
+    
+    body.light-mode textarea {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+    }
+    
+    body.dark-mode textarea {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+    }
+    
+    body.light-mode textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+    
+    body.dark-mode textarea:focus {
+        outline: none;
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
+    }
+    
+    textarea::placeholder {
+        color: #94a3b8;
+    }
+    
+    /* Editable commands textarea specific styling */
+    #editableCommands {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        resize: vertical;
+    }
+    
+    body.light-mode #editableCommands {
+        background: #f8fafc;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+    }
+    
+    body.dark-mode #editableCommands {
+        background: #0f172a;
+        color: #10b981;
+        border: 1px solid #334155;
+    }
+    
+    #editableCommands:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    
+    select {
+        width: auto;
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    body.light-mode select {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+    }
+    
+    body.dark-mode select {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+    }
+    
+    .model-selector {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .generate-btn {
+        width: 100%;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        border: none;
+    }
+    
+    .generate-btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .deploy-section {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .device-selector {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 10px;
+        min-width: 200px;
+    }
+    
+    .deploy-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    
+    .deploy-btn:hover {
+        background: #059669;
+    }
+    
+    .deploy-btn:disabled {
+        background: #64748b;
+        cursor: not-allowed;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 60px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .error {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    body.light-mode .error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+    
+    body.dark-mode .error {
+        background: #450a0a;
+        border: 1px solid #7f1d1d;
+        color: #fca5a5;
+    }
+    
+    .success {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    body.light-mode .success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #16a34a;
+    }
+    
+    body.dark-mode .success {
+        background: #064e3b;
+        border: 1px solid #065f46;
+        color: #86efac;
+    }
+    
+    .examples {
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+    
+    body.light-mode .examples {
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    body.dark-mode .examples {
+        border-top: 1px solid #334155;
+    }
+    
+    .example-btn {
+        background: transparent;
+        border: 1px solid;
+        padding: 6px 12px;
+        margin: 5px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+    
+    body.light-mode .example-btn {
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    
+    body.light-mode .example-btn:hover {
+        background: #f1f5f9;
+        border-color: #2563eb;
+        color: #2563eb;
+    }
+    
+    body.dark-mode .example-btn {
+        border-color: #475569;
+        color: #94a3b8;
+    }
+    
+    body.dark-mode .example-btn:hover {
+        background: #334155;
+        border-color: #60a5fa;
+        color: #60a5fa;
+    }
+    
+    h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .label-text {
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .info-badge {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    
+    body.light-mode .info-badge {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    
+    body.dark-mode .info-badge {
+        background: #334155;
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="fas fa-robot me-2 text-primary"></i>AI Configuration Assistant</h1>
+        <p class="text-secondary-custom">Describe network changes in plain English, and let AI generate Cisco commands</p>
+    </div>
+</div>
+
+<div class="ai-container">
+    <!-- Input Section -->
+    <div class="input-section">
+        <h3><i class="fas fa-edit me-2 text-primary"></i>Describe What You Want</h3>
+        
+        <div class="model-selector">
+            <span class="label-text">AI Model:</span>
+            <select id="modelSelect" class="form-select" style="width: auto;">
+                <option value="phi3">Phi-3 (Recommended)</option>
+                <option value="llama3.2:3b">Llama 3.2 3B</option>
+                <option value="llama3.2:1b">Llama 3.2 1B (Faster)</option>
+            </select>
+        </div>
+        
+        <textarea id="promptInput" rows="5" 
+            placeholder="Example: Create VLAN 20 for HR department on ports Gi0/5 to Gi0/8"></textarea>
+        
+        <div class="examples">
+            <strong><i class="fas fa-lightbulb me-1 text-warning"></i>Try these examples:</strong>
+            <div>
+                <button class="example-btn" data-prompt="Create VLAN 30 named Engineering on ports Gi0/10 to Gi0/15">
+                    <i class="fas fa-plus-circle me-1"></i>VLAN with ports
+                </button>
+                <button class="example-btn" data-prompt="Create VLAN 40 named Finance">
+                    <i class="fas fa-tag me-1"></i>VLAN only
+                </button>
+                <button class="example-btn" data-prompt="Delete VLAN 20">
+                    <i class="fas fa-trash-alt me-1"></i>Delete VLAN
+                </button>
+                <button class="example-btn" data-prompt="Shut down port Gi0/5">
+                    <i class="fas fa-power-off me-1"></i>Shut down port
+                </button>
+                <button class="example-btn" data-prompt="Enable port Gi0/5">
+                    <i class="fas fa-play me-1"></i>Enable port
+                </button>
+                <button class="example-btn" data-prompt="Set description on Gi0/1 to 'Uplink to Core Switch'">
+                    <i class="fas fa-tag me-1"></i>Set description
+                </button>
+            </div>
+        </div>
+        
+        <button class="generate-btn btn-primary" id="generateBtn">
+            <i class="fas fa-magic me-2"></i>Generate Configuration
+        </button>
+    </div>
+    
+    <!-- Output Section -->
+    <div class="output-section">
+        <h3><i class="fas fa-terminal me-2 text-success"></i>Generated Configuration</h3>
+        <div id="outputArea">
+            <div class="text-center py-5 text-secondary-custom">
+                <i class="fas fa-info-circle fa-2x mb-3 opacity-50"></i>
+                <p>Enter a network configuration request and click "Generate Configuration"</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // DOM elements
+    const promptInput = document.getElementById('promptInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const modelSelect = document.getElementById('modelSelect');
+    const outputArea = document.getElementById('outputArea');
+    
+    let currentCommands = [];
+    
+    // Example buttons
+    $('.example-btn').on('click', function() {
+        promptInput.value = $(this).data('prompt');
+        promptInput.style.height = 'auto';
+        promptInput.style.height = promptInput.scrollHeight + 'px';
+    });
+    
+    // Auto-resize textarea as user types
+    promptInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+    
+    // Generate button click
+    generateBtn.addEventListener('click', async () => {
+        const prompt = promptInput.value.trim();
+        
+        if (!prompt) {
+            showError('Please enter a configuration request');
+            return;
+        }
+        
+        showLoading();
+        generateBtn.disabled = true;
+        
+        try {
+            const response = await fetch('/automation/api/generate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    model: modelSelect.value
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentCommands = data.commands;
+                showEditableCommands(data.commands);
+            } else {
+                showError(data.error || 'Failed to generate configuration');
+            }
+        } catch (error) {
+            showError('Network error: ' + error.message);
+        } finally {
+            generateBtn.disabled = false;
+        }
+    });
+    
+    function showLoading() {
+        outputArea.innerHTML = `
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p class="mt-3 text-secondary-custom">Generating configuration with AI...</p>
+                <small class="text-secondary-custom">This may take 10-20 seconds</small>
+            </div>
+        `;
+    }
+    
+    // Function to display EDITABLE commands
+    function showEditableCommands(commands) {
+        // Join commands with newlines for textarea
+        const commandsText = commands.join('\n');
+        
+        let html = `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="fw-semibold">
+                        <i class="fas fa-edit me-1 text-primary"></i>Configuration Commands
+                    </label>
+                    <span class="info-badge">
+                        <i class="fas fa-pencil-alt me-1"></i>Editable
+                    </span>
+                </div>
+                <textarea id="editableCommands" rows="12" class="form-control" 
+                          style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; resize: vertical;">${escapeHtml(commandsText)}</textarea>
+                <small class="text-secondary-custom mt-2 d-block">
+                    <i class="fas fa-info-circle me-1"></i>
+                    You can edit, add, or remove commands before deploying to the device
+                </small>
+            </div>
+        `;
+        
+        // Add device selector and deploy button
+        html += `
+            <div class="deploy-section">
+                <select id="deviceSelect" class="device-selector form-select">
+                    <option value="">-- Select device to deploy --</option>
+                    {% for device in devices %}
+                    <option value="{{ device.id }}">{{ device.name }} ({{ device.host }}:{{ device.port }})</option>
+                    {% endfor %}
+                </select>
+                <button id="deployBtn" class="deploy-btn">
+                    <i class="fas fa-cloud-upload-alt me-1"></i> Deploy to Device
+                </button>
+            </div>
+        `;
+        
+        outputArea.innerHTML = html;
+        
+        // Add deploy button event listener - reads from editable textarea
+        const deployBtn = document.getElementById('deployBtn');
+        const deviceSelect = document.getElementById('deviceSelect');
+        
+        deployBtn.addEventListener('click', async () => {
+            const deviceId = deviceSelect.value;
+            if (!deviceId) {
+                showError('Please select a device');
+                return;
+            }
+            
+            // Get commands from the editable textarea
+            const editableCommands = document.getElementById('editableCommands');
+            let commandsText = editableCommands.value;
+            // Split by newline and filter out empty lines
+            const commandsArray = commandsText.split('\n').filter(cmd => cmd.trim().length > 0);
+            
+            if (commandsArray.length === 0) {
+                showError('No commands to deploy');
+                return;
+            }
+            
+            deployBtn.disabled = true;
+            deployBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Deploying...';
+            
+            try {
+                const response = await fetch('/automation/api/deploy/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_id: parseInt(deviceId),
+                        commands: commandsArray
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('✅ Configuration deployed successfully!');
+                } else {
+                    showError(data.error || 'Deployment failed');
+                }
+            } catch (error) {
+                showError('Deployment error: ' + error.message);
+            } finally {
+                deployBtn.disabled = false;
+                deployBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-1"></i> Deploy to Device';
+            }
+        });
+    }
+    
+    function showError(message) {
+        outputArea.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle me-2"></i>${escapeHtml(message)}</div>`;
+    }
+    
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success';
+        successDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+        outputArea.insertBefore(successDiv, outputArea.firstChild);
+        setTimeout(() => successDiv.remove(), 5000);
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+{% endblock %}
