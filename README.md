@@ -166,13 +166,13 @@ python manage.py createsuperuser
 # Start the server
 python manage.py runserver
 ```
-6. Access the Application
+## 6. Access the Application
 Application	URL
 Dashboard	http://localhost:8000/dashboard/
 AI Assistant	http://localhost:8000/automation/
 Admin Panel	http://localhost:8000/admin/
 
-7. Add Your Switch
+## 7. Add Your Switch
 Go to http://localhost:8000/admin
 
 Log in with your superuser credentials (admin / admin)
@@ -191,7 +191,7 @@ Password: (leave blank if no password)
 
 Click Save
 
-📁 Project Structure
+## 📁 Project Structure
 ```text
 django_project/
 ├── manage.py
@@ -223,7 +223,7 @@ django_project/
 └── screenshots/
     └── (screenshots here)
 ```
-##🧪 Testing
+## 🧪 Testing
 Test Connection to Switch
 ```bash
 python3 -c "
@@ -232,7 +232,7 @@ output = run_command('192.168.139.30', 5024, 'show version')
 print(output[:500])
 "
 ```
-##Test AI Configuration Generation
+## Test AI Configuration Generation
 Open http://localhost:8000/automation/
 
 Type: Create VLAN 20 named HR on ports Gi0/5 to Gi0/8
@@ -245,7 +245,7 @@ Select your switch
 
 Click Deploy
 
-##🔮 Future Enhancements
+## 🔮 Future Enhancements
 Configuration history and rollback
 
 Multi-device bulk operations
@@ -260,15 +260,15 @@ REST API for external automation
 
 Docker containerization
 
-##📄 License
+## 📄 License
 This project is licensed under the MIT License.
 
-##👨‍💻 Author
+## 👨‍💻 Author
 MNSB
 
 GitHub: @mnsb-dev
 
-##🙏 Acknowledgments
+## 🙏 Acknowledgments
 Harvard CS50 for Python and Django foundation
 
 Cisco DevNet for networking concepts
