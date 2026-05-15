@@ -138,26 +138,25 @@
 ```bash
 git clone https://github.com/mnsb-dev/network-cdn.git
 cd network-cdn
-
+```
 2. Activate Virtual Environment
-bash
+```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-
+```
 3. Install Dependencies
-bash
+```bash
 pip install -r requirements.txt
-
+```
 4. Configure Ollama
-bash
+```bash
 # Pull the Phi-3 model (or use llama3.2)
 ollama pull phi3
-
 # Keep Ollama running in a separate terminal
 ollama serve
-
+```
 5. Run Django
-bash
+```bash
 # Run migrations
 python manage.py migrate
 
@@ -166,7 +165,7 @@ python manage.py createsuperuser
 
 # Start the server
 python manage.py runserver
-
+```
 6. Access the Application
 Application	URL
 Dashboard	http://localhost:8000/dashboard/
@@ -225,12 +224,13 @@ django_project/
     └── (screenshots here)
 🧪 Testing
 Test Connection to Switch
-bash
+```bash
 python3 -c "
 from devices.telnet_helper import run_command
 output = run_command('192.168.139.30', 5024, 'show version')
 print(output[:500])
 "
+```
 Test AI Configuration Generation
 Open http://localhost:8000/automation/
 
